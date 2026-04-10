@@ -1,4 +1,40 @@
 services:
+  auth-db:
+    image: postgres:16-alpine
+    container_name: poke-auth-db
+    environment:
+      POSTGRES_DB: poke_auth
+      POSTGRES_USER: poke
+      POSTGRES_PASSWORD: poke
+    ports:
+      - "55432:5432"
+    volumes:
+      - poke-auth-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U poke -d poke_auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  auth:
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+    container_name: poke-auth
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__AuthDb: Host=auth-db;Port=5432;Database=poke_auth;Username=poke;Password=poke
+      Jwt__Issuer: PokeAuth
+      Jwt__Audience: PokeApp
+      Jwt__Key: super-secret-development-key-change-me
+      Jwt__ExpirationHours: 8
+    ports:
+      - "5190:8080"
+    restart: unless-stopped
+
   back:
     build:
       context: ./back
@@ -20,3 +56,6 @@ services:
     ports:
       - "5173:80"
     restart: unless-stopped
+
+volumes:
+  poke-auth-db-data:
