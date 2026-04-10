@@ -40,6 +40,10 @@ services:
       context: ./back
       dockerfile: Dockerfile
     container_name: poke-back
+    depends_on:
+      - auth
+    environment:
+      Auth__BaseUrl: http://auth:8080
     ports:
       - "5180:8080"
     restart: unless-stopped
@@ -50,6 +54,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: http://localhost:5180/api/v2
+        VITE_AUTH_BASE_URL: http://localhost:5190
     container_name: poke-front
     depends_on:
       - back

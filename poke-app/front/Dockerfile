@@ -9,6 +9,9 @@ COPY . ./
 ARG VITE_API_BASE_URL=http://localhost:5180/api/v2
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
+ARG VITE_AUTH_BASE_URL=http://localhost:5190
+ENV VITE_AUTH_BASE_URL=${VITE_AUTH_BASE_URL}
+
 RUN npm run build
 
 FROM nginx:1.27-alpine AS runtime

@@ -19,6 +19,14 @@ builder.Services.AddHttpClient("pokeapi", client =>
     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 });
 
+var authBaseUrl = builder.Configuration["Auth:BaseUrl"] ?? "http://localhost:5190";
+
+builder.Services.AddHttpClient("auth", client =>
+{
+    client.BaseAddress = new Uri(authBaseUrl);
+    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+});
+
 var app = builder.Build();
 
 app.UseCors();
@@ -46,6 +54,34 @@ app.MapMethods("/api/v2/{**pokePath}", new[] { "GET" }, async (
     IHttpClientFactory httpClientFactory,
     CancellationToken cancellationToken) =>
 {
+    var bearerToken = ExtractBearerToken(context.Request);
+
+    if (string.IsNullOrWhiteSpace(bearerToken))
+    {
+        return Results.Unauthorized();
+    }
+
+    var authClient = httpClientFactory.CreateClient("auth");
+    using var userInfoRequest = new HttpRequestMessage(HttpMethod.Get, "/auth/userinfo");
+    userInfoRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+
+    using var userInfoResponse = await authClient.SendAsync(
+        userInfoRequest,
+        HttpCompletionOption.ResponseHeadersRead,
+        cancellationToken);
+
+    if (userInfoResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (!userInfoResponse.IsSuccessStatusCode)
+    {
+        return Results.Problem(
+            title: "No se pudo validar el usuario autenticado.",
+            statusCode: StatusCodes.Status502BadGateway);
+    }
+
     if (string.IsNullOrWhiteSpace(pokePath))
     {
         return Results.BadRequest(new
@@ -83,6 +119,22 @@ app.MapMethods("/api/v2/{**pokePath}", new[] { "GET" }, async (
 });
 
 app.Run();
+
+static string? ExtractBearerToken(HttpRequest request)
+{
+    if (!request.Headers.TryGetValue("Authorization", out var authorizationHeader))
+    {
+        return null;
+    }
+
+    var headerValue = authorizationHeader.ToString();
+
+    const string bearerPrefix = "Bearer ";
+
+    return headerValue.StartsWith(bearerPrefix, StringComparison.OrdinalIgnoreCase)
+        ? headerValue[bearerPrefix.Length..].Trim()
+        : null;
+}
 
 static string BuildUpstreamUri(HttpRequest request, string pokePath)
 {
