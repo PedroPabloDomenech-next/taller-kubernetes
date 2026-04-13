@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth
+  namespace: poke-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+        - name: auth
+          image: poke-auth:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ConnectionStrings__AuthDb
+              valueFrom:
+                secretKeyRef:
+                  name: poke-secrets
+                  key: auth-db-connection-string
+            - name: Jwt__Issuer
+              value: PokeAuth
+            - name: Jwt__Audience
+              value: PokeApp
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: poke-secrets
+                  key: jwt-key
+            - name: Jwt__ExpirationHours
+              value: "8"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
