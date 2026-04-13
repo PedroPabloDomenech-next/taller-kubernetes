@@ -44,7 +44,7 @@ function App() {
       setError("");
 
       try {
-        const response = await fetch(`${AUTH_BASE_URL}/auth/userinfo`, {
+        const response = await fetch(`${AUTH_BASE_URL}/userinfo`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -218,7 +218,7 @@ function App() {
     setAuthNotice("");
 
     try {
-      const response = await fetch(`${AUTH_BASE_URL}/auth/login`, {
+      const response = await fetch(`${AUTH_BASE_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -254,7 +254,7 @@ function App() {
     setAuthNotice("");
 
     try {
-      const response = await fetch(`${AUTH_BASE_URL}/auth/register`, {
+      const response = await fetch(`${AUTH_BASE_URL}/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
