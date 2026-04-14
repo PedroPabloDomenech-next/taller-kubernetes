@@ -9,12 +9,12 @@ spring:
 
 auth:
   db:
-    connection-string: ${ConnectionStrings__AuthDb:${AUTH_DB_URL:jdbc:postgresql://localhost:55432/poke_auth?user=poke&password=poke}}
+    connection-string: ${AUTH_DB_URL:jdbc:postgresql://localhost:55432/poke_auth?user=poke&password=poke}
   jwt:
-    issuer: ${Jwt__Issuer:${JWT_ISSUER:PokeAuth}}
-    audience: ${Jwt__Audience:${JWT_AUDIENCE:PokeApp}}
-    key: ${Jwt__Key:${JWT_KEY:super-secret-development-key-change-me}}
-    expiration-hours: ${Jwt__ExpirationHours:${JWT_EXPIRATION_HOURS:8}}
+    issuer: ${JWT_ISSUER:PokeAuth}
+    audience: ${JWT_AUDIENCE:PokeApp}
+    key: ${JWT_KEY:super-secret-development-key-change-me}
+    expiration-hours: ${JWT_EXPIRATION_HOURS:8}
 
 logging:
   level:

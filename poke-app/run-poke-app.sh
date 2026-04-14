@@ -38,7 +38,8 @@ require_command() {
 
 trap cleanup EXIT INT TERM
 
-require_command dotnet
+require_command java
+require_command mvn
 require_command npm
 require_command docker
 
@@ -52,11 +53,11 @@ if [[ ! -d "$FRONT_DIR/node_modules" ]]; then
   (cd "$FRONT_DIR" && npm install)
 fi
 
-echo "Restaurando dependencias del backend..."
-(cd "$BACK_DIR" && dotnet restore >/dev/null)
+echo "Compilando backend Java..."
+(cd "$BACK_DIR" && mvn -q -DskipTests compile >/dev/null)
 
-echo "Restaurando dependencias del auth..."
-(cd "$AUTH_DIR" && dotnet restore >/dev/null)
+echo "Compilando auth Java..."
+(cd "$AUTH_DIR" && mvn -q -DskipTests compile >/dev/null)
 
 echo "Levantando PostgreSQL para auth..."
 (cd "$ROOT_DIR" && docker compose up -d auth-db >/dev/null)
@@ -77,17 +78,18 @@ fi
 echo "Levantando auth en http://localhost:5190 ..."
 (
   cd "$AUTH_DIR" && \
-  ConnectionStrings__AuthDb="Host=localhost;Port=55432;Database=poke_auth;Username=poke;Password=poke" \
-  Jwt__Issuer="PokeAuth" \
-  Jwt__Audience="PokeApp" \
-  Jwt__Key="super-secret-development-key-change-me" \
-  Jwt__ExpirationHours="8" \
-  dotnet run
+  SERVER_PORT="5190" \
+  AUTH_DB_URL="jdbc:postgresql://localhost:55432/poke_auth?user=poke&password=poke" \
+  JWT_ISSUER="PokeAuth" \
+  JWT_AUDIENCE="PokeApp" \
+  JWT_KEY="super-secret-development-key-change-me" \
+  JWT_EXPIRATION_HOURS="8" \
+  mvn -q spring-boot:run
 ) &
 AUTH_PID=$!
 
 echo "Levantando backend en http://localhost:5180 ..."
-(cd "$BACK_DIR" && dotnet run) &
+(cd "$BACK_DIR" && SERVER_PORT="5180" AUTH_BASE_URL="http://localhost:5190" mvn -q spring-boot:run) &
 BACK_PID=$!
 
 echo "Levantando frontend con Vite..."

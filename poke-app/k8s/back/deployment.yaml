@@ -20,7 +20,7 @@ spec:
           ports:
             - containerPort: 8080
           env:
-            - name: Auth__BaseUrl
+            - name: AUTH_BASE_URL
               value: http://auth:8080
           readinessProbe:
             httpGet:

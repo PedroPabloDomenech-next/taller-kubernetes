@@ -1,11 +1,12 @@
 # Poke App Front
 
-Frontend en React + Vite que consume el backend .NET de `poke-app/back`.
+Frontend en React + Vite que consume el backend Java de `poke-app/back`.
 
 ## Requisitos
 
 - Node.js 18 o superior
-- Backend .NET levantado en `http://localhost:5180`
+- Backend Java levantado en `http://localhost:5180`
+- Servicio `auth` levantado en `http://localhost:5190`
 
 ## Ejecutar
 
@@ -21,6 +22,12 @@ Puedes cambiar la URL base del backend con una variable de entorno:
 
 ```bash
 VITE_API_BASE_URL=http://localhost:5180/api/v2
+```
+
+Y la del servicio de autenticación con:
+
+```bash
+VITE_AUTH_BASE_URL=http://localhost:5190/auth
 ```
 
 ## Funcionalidades

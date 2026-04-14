@@ -8,7 +8,7 @@ spring:
     default-property-inclusion: non_null
 
 auth:
-  base-url: ${Auth__BaseUrl:${AUTH_BASE_URL:http://localhost:5190}}
+  base-url: ${AUTH_BASE_URL:http://localhost:5190}
 
 logging:
   level:

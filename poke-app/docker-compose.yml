@@ -26,11 +26,11 @@ services:
       auth-db:
         condition: service_healthy
     environment:
-      ConnectionStrings__AuthDb: Host=auth-db;Port=5432;Database=poke_auth;Username=poke;Password=poke
-      Jwt__Issuer: PokeAuth
-      Jwt__Audience: PokeApp
-      Jwt__Key: super-secret-development-key-change-me
-      Jwt__ExpirationHours: 8
+      AUTH_DB_URL: jdbc:postgresql://auth-db:5432/poke_auth?user=poke&password=poke
+      JWT_ISSUER: PokeAuth
+      JWT_AUDIENCE: PokeApp
+      JWT_KEY: super-secret-development-key-change-me
+      JWT_EXPIRATION_HOURS: 8
     ports:
       - "5190:8080"
     restart: unless-stopped
@@ -43,7 +43,7 @@ services:
     depends_on:
       - auth
     environment:
-      Auth__BaseUrl: http://auth:8080
+      AUTH_BASE_URL: http://auth:8080
     ports:
       - "5180:8080"
     restart: unless-stopped
