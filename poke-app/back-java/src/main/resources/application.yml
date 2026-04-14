@@ -1,0 +1,16 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: poke-back-java
+  jackson:
+    default-property-inclusion: non_null
+
+auth:
+  base-url: ${Auth__BaseUrl:${AUTH_BASE_URL:http://localhost:5190}}
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
