@@ -1,19 +1,19 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM maven:3.9.9-eclipse-temurin-21 AS build
 WORKDIR /src
 
-COPY PokeAuthApi.csproj ./
-RUN dotnet restore
+COPY pom.xml ./
+RUN mvn -q -DskipTests dependency:go-offline
 
-COPY . ./
-RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
+COPY src ./src
+RUN mvn -q -DskipTests package
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 
-ENV ASPNETCORE_URLS=http://+:8080
+COPY --from=build /src/target/poke-auth-0.0.1-SNAPSHOT.jar app.jar
 
-COPY --from=build /app/publish ./
+ENV SERVER_PORT=8080
 
 EXPOSE 8080
 
-ENTRYPOINT ["dotnet", "PokeAuthApi.dll"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

@@ -1,0 +1,22 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: poke-auth
+  jackson:
+    default-property-inclusion: non_null
+
+auth:
+  db:
+    connection-string: ${ConnectionStrings__AuthDb:${AUTH_DB_URL:jdbc:postgresql://localhost:55432/poke_auth?user=poke&password=poke}}
+  jwt:
+    issuer: ${Jwt__Issuer:${JWT_ISSUER:PokeAuth}}
+    audience: ${Jwt__Audience:${JWT_AUDIENCE:PokeApp}}
+    key: ${Jwt__Key:${JWT_KEY:super-secret-development-key-change-me}}
+    expiration-hours: ${Jwt__ExpirationHours:${JWT_EXPIRATION_HOURS:8}}
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
