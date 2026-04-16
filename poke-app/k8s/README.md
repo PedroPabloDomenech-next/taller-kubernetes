@@ -57,13 +57,6 @@ kubectl apply -k poke-app/k8s/
 
 ### Despliegue end-to-end en Minikube
 
-Script equivalente:
-
-```bash
-chmod +x scripts/deploy-minikube-e2e.sh
-./scripts/deploy-minikube-e2e.sh
-```
-
 1. Arranca Minikube:
 
 ```bash
@@ -79,7 +72,7 @@ minikube addons enable ingress
 3. Construye las imágenes dentro del daemon Docker de Minikube:
 
 ```bash
-eval $(minikube docker-env)
+eval "$(minikube -p minikube docker-env --shell bash)"
 docker build -t poke-auth:latest poke-app/auth
 docker build -t poke-back:latest poke-app/back
 docker build -t poke-front:latest poke-app/front \
@@ -137,20 +130,10 @@ kubectl logs -n poke-app deployment/front
 
 Si cambias código de `front`, `back` o `auth`, en Minikube no hace falta publicar a un registry externo. El flujo normal es reconstruir la imagen dentro del daemon Docker de Minikube y reiniciar el `Deployment`.
 
-Script equivalente:
-
-```bash
-chmod +x scripts/apply-pod-changes.sh
-./scripts/apply-pod-changes.sh front
-./scripts/apply-pod-changes.sh back
-./scripts/apply-pod-changes.sh auth
-./scripts/apply-pod-changes.sh manifests
-```
-
 1. Conecta tu shell al Docker de Minikube:
 
 ```bash
-eval $(minikube docker-env)
+eval "$(minikube -p minikube docker-env --shell bash)"
 ```
 
 2. Reconstruye solo la imagen que haya cambiado.
@@ -221,14 +204,6 @@ Si además cambió la imagen, reconstruye primero la imagen y luego relanza el `
 
 Si quieres dejar el entorno limpio para repetir el despliegue completo, borra primero los recursos de Kubernetes y, si quieres reiniciar también los datos, elimina el PVC de la base de datos.
 
-Script equivalente:
-
-```bash
-chmod +x scripts/cleanup-deployment.sh
-./scripts/cleanup-deployment.sh
-./scripts/cleanup-deployment.sh --delete-pvc
-```
-
 1. Borra todos los recursos creados por Kustomize:
 
 ```bash
@@ -252,7 +227,7 @@ kubectl delete pvc auth-db-data -n poke-app
 4. Si vas a reconstruir imágenes locales en Minikube, conecta tu shell a su Docker:
 
 ```bash
-eval $(minikube docker-env)
+eval "$(minikube -p minikube docker-env --shell bash)"
 ```
 
 5. Reconstruye las imágenes:
@@ -277,12 +252,11 @@ kubectl -n poke-app rollout status deployment/front
 
 Si prefieres una limpieza todavía más agresiva del entorno local de Minikube, puedes parar y recrear el clúster con `minikube delete` y luego repetir la guía end-to-end desde el principio.
 
-Script equivalente:
+Si además quieres limpiar caché de construcción e imágenes locales generadas durante la práctica:
 
 ```bash
-chmod +x scripts/cleanup-minikube.sh
-./scripts/cleanup-minikube.sh
-./scripts/cleanup-minikube.sh --purge
+docker builder prune -a
+docker images | grep '^poke-app' | awk '{print $2}' | xargs docker rmi
 ```
 
 ### Nota sobre el frontend

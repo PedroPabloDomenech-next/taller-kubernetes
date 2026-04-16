@@ -52,6 +52,10 @@ stop_docker_services() {
 }
 
 main() {
+  log "Aviso"
+  echo "Este proceso elimina Docker y componentes asociados instalados para el taller."
+  echo "No se garantiza la conservacion de imagenes, contenedores o datos de otros proyectos que usen Docker en esta maquina."
+
   log "Deteniendo servicios de Docker"
   stop_docker_services
 
