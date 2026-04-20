@@ -105,6 +105,41 @@ button {
   gap: 20px;
 }
 
+.hero-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 18px 12px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.hero-profile-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 224, 102, 0.95), rgba(255, 224, 102, 0.35) 38%, rgba(255, 255, 255, 0.12) 100%),
+    rgba(29, 53, 87, 0.3);
+  box-shadow:
+    0 10px 24px rgba(15, 23, 42, 0.16),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.26);
+}
+
+.hero-profile-avatar svg {
+  width: 34px;
+  height: 34px;
+  fill: #fff;
+}
+
+.hero-profile-copy {
+  min-width: 0;
+}
+
 .hero-user-label,
 .hero-user-email {
   margin: 0;
@@ -118,6 +153,7 @@ button {
 .hero-user-email {
   margin-top: 4px;
   opacity: 0.92;
+  overflow-wrap: anywhere;
 }
 
 .logout-button {
@@ -377,6 +413,11 @@ button {
   .hero-topbar {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .hero-profile {
+    width: 100%;
+    border-radius: 24px;
   }
 
   .hero,

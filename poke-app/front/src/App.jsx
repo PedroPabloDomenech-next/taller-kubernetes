@@ -443,10 +443,17 @@ function App() {
       <section className="hero">
         <h1 className="eyebrow">Pokédex local</h1>
         <div className="hero-topbar">
-          <div>
-            <p className="hero-user-label">Usuario autenticado</p>
-            <strong>{currentUser.firstName} {currentUser.lastName}</strong>
-            <p className="hero-user-email">{currentUser.email}</p>
+          <div className="hero-profile" aria-label="Perfil del usuario autenticado">
+            <div className="hero-profile-avatar" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.86 0-7 2.24-7 5v1h14v-1c0-2.76-3.14-5-7-5Z" />
+              </svg>
+            </div>
+            <div className="hero-profile-copy">
+              <p className="hero-user-label">Usuario autenticado</p>
+              <strong>{formatDisplayName(currentUser)}</strong>
+              <p className="hero-user-email">{currentUser.email}</p>
+            </div>
           </div>
           <button type="button" className="logout-button" onClick={handleLogout}>
             Cerrar sesión
@@ -584,6 +591,15 @@ function formatPokemonName(name) {
     .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function formatDisplayName(user) {
+  if (!user) {
+    return "";
+  }
+
+  const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
+  return fullName || user.email;
 }
 
 export default App;

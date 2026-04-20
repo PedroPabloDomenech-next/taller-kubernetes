@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: back
-          image: poke-back:1.0.0
+          image: poke-back:1.1.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
