@@ -27,6 +27,9 @@ function App() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [submittedSearch, setSubmittedSearch] = useState("");
+  const [selectedType, setSelectedType] = useState("");
+  const [submittedType, setSubmittedType] = useState("");
+  const [pokemonTypes, setPokemonTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -90,13 +93,62 @@ function App() {
 
     let ignore = false;
 
+    async function loadPokemonTypes() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/type`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.status === 401) {
+          clearSession();
+          return;
+        }
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        const filteredTypes = Array.isArray(data.results)
+          ? data.results.filter((type) => !["shadow", "unknown"].includes(type.name))
+          : [];
+
+        if (!ignore) {
+          setPokemonTypes(filteredTypes);
+        }
+      } catch {
+        if (!ignore) {
+          setPokemonTypes([]);
+        }
+      }
+    }
+
+    loadPokemonTypes();
+
+    return () => {
+      ignore = true;
+    };
+  }, [currentUser, token]);
+
+  useEffect(() => {
+    if (!token || !currentUser) {
+      return;
+    }
+
+    let ignore = false;
+
     async function loadPokemons() {
       setLoading(true);
       setError("");
 
       try {
-        if (submittedSearch.trim()) {
-          const response = await fetch(`${API_BASE_URL}/pokemon/${submittedSearch.trim().toLowerCase()}`, {
+        const normalizedSearch = submittedSearch.trim().toLowerCase();
+        const normalizedType = submittedType.trim().toLowerCase();
+
+        if (normalizedSearch) {
+          const response = await fetch(`${API_BASE_URL}/pokemon/${normalizedSearch}`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -116,6 +168,13 @@ function App() {
           }
 
           const pokemon = await response.json();
+          const matchesType =
+            !normalizedType ||
+            pokemon.types?.some((entry) => entry.type?.name?.toLowerCase() === normalizedType);
+
+          if (!matchesType) {
+            throw new Error(`"${formatPokemonName(pokemon.name)}" no pertenece al tipo ${formatPokemonName(normalizedType)}.`);
+          }
 
           if (!ignore) {
             setPokemons([
@@ -126,6 +185,49 @@ function App() {
               },
             ]);
             setCount(1);
+          }
+
+          return;
+        }
+
+        if (normalizedType) {
+          const response = await fetch(`${API_BASE_URL}/type/${normalizedType}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.status === 404) {
+            throw new Error("No se ha encontrado ningún tipo de Pokémon con ese nombre.");
+          }
+
+          if (response.status === 401) {
+            clearSession();
+            throw new Error("La sesión ha expirado. Vuelve a iniciar sesión.");
+          }
+
+          if (!response.ok) {
+            throw new Error("No se pudo cargar el filtro por tipo.");
+          }
+
+          const data = await response.json();
+          const allPokemons = Array.isArray(data.pokemon)
+            ? data.pokemon.map((entry) => {
+                const id = extractPokemonId(entry.pokemon.url);
+
+                return {
+                  id,
+                  name: entry.pokemon.name,
+                  image: getPokemonImage(id),
+                };
+              })
+            : [];
+          const start = (page - 1) * PAGE_SIZE;
+          const paginated = allPokemons.slice(start, start + PAGE_SIZE);
+
+          if (!ignore) {
+            setPokemons(paginated);
+            setCount(allPokemons.length);
           }
 
           return;
@@ -180,20 +282,25 @@ function App() {
     return () => {
       ignore = true;
     };
-  }, [currentUser, page, submittedSearch, token]);
+  }, [currentUser, page, submittedSearch, submittedType, token]);
 
   const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
-  const isSearchMode = submittedSearch.trim().length > 0;
+  const hasSearch = submittedSearch.trim().length > 0;
+  const hasTypeFilter = submittedType.trim().length > 0;
+  const shouldShowPagination = !hasSearch;
 
   function handleSubmit(event) {
     event.preventDefault();
     setPage(1);
     setSubmittedSearch(search);
+    setSubmittedType(selectedType);
   }
 
   function handleReset() {
     setSearch("");
     setSubmittedSearch("");
+    setSelectedType("");
+    setSubmittedType("");
     setPage(1);
   }
 
@@ -294,6 +401,8 @@ function App() {
     setPage(1);
     setSearch("");
     setSubmittedSearch("");
+    setSelectedType("");
+    setSubmittedType("");
     setAuthError("");
     setAuthNotice("");
   }
@@ -306,6 +415,9 @@ function App() {
     setCount(0);
     setSearch("");
     setSubmittedSearch("");
+    setSelectedType("");
+    setSubmittedType("");
+    setPokemonTypes([]);
   }
 
   function handleLogout() {
@@ -464,7 +576,7 @@ function App() {
       <section className="toolbar">
         <form className="search-form" onSubmit={handleSubmit}>
           <label className="search-label" htmlFor="pokemon-search">
-            Buscar por nombre
+            Buscar y filtrar
           </label>
           <div className="search-row">
             <input
@@ -474,6 +586,14 @@ function App() {
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Ejemplo: pikachu"
             />
+            <select value={selectedType} onChange={(event) => setSelectedType(event.target.value)} aria-label="Filtrar por tipo">
+              <option value="">Todos los tipos</option>
+              {pokemonTypes.map((type) => (
+                <option key={type.name} value={type.name}>
+                  {formatPokemonName(type.name)}
+                </option>
+              ))}
+            </select>
             <button type="submit">Buscar</button>
             <button type="button" className="secondary" onClick={handleReset}>
               Limpiar
@@ -496,9 +616,11 @@ function App() {
         <>
           <section className="results-meta">
             <p>
-              {isSearchMode
-                ? `Resultado para "${submittedSearch}".`
-                : `Página ${page} de ${totalPages}. Total de Pokémon: ${count}.`}
+              {hasSearch
+                ? `Resultado para "${submittedSearch}"${hasTypeFilter ? ` en tipo ${formatPokemonName(submittedType)}` : ""}.`
+                : hasTypeFilter
+                  ? `Tipo ${formatPokemonName(submittedType)}. Página ${page} de ${totalPages}. Total de Pokémon: ${count}.`
+                  : `Página ${page} de ${totalPages}. Total de Pokémon: ${count}.`}
             </p>
           </section>
 
@@ -518,7 +640,7 @@ function App() {
             ))}
           </section>
 
-          {!isSearchMode ? (
+          {shouldShowPagination ? (
             <nav className="pagination" aria-label="Paginación de Pokémon">
               <button type="button" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1}>
                 Anterior
